@@ -558,105 +558,100 @@ const handlers = {
     }
 };
 
-// Express server
-if (typeof require !== 'undefined') {
-    const express = require('express');
-    const cors = require('cors');
-    const app = express();
-    
-    app.use(cors());
-    app.use(express.json());
-    
-    // Routes
-    app.get('/api/world', async (req, res) => {
-        try {
-            res.json(await handlers.getWorld());
-        } catch (e) {
-            res.status(500).json({ error: e.message });
-        }
-    });
-    
-    // AI Verification Challenge - Step 1
-    app.post('/api/challenge', async (req, res) => {
-        try {
-            const { name } = req.body;
-            res.json(await handlers.getChallenge(name));
-        } catch (e) {
-            res.status(500).json({ error: e.message });
-        }
-    });
-    
-    // Register - Step 2 (requires challengeId + answer)
-    app.post('/api/register', async (req, res) => {
-        try {
-            const { name, ownerAddress, xHandle, challengeId, answer } = req.body;
-            const result = await handlers.registerBot(name, ownerAddress, xHandle, challengeId, answer);
-            if (result.status === 'verification_failed') {
-                res.status(403).json(result);
-            } else {
-                res.json(result);
-            }
-        } catch (e) {
-            res.status(500).json({ error: e.message });
-        }
-    });
-    
-    app.post('/api/action', async (req, res) => {
-        try {
-            const { botId, action, ...params } = req.body;
-            switch (action) {
-                case 'move':
-                    res.json(await handlers.moveBot(botId, params.direction));
-                    break;
-                case 'speak':
-                    res.json(await handlers.speak(botId, params.message));
-                    break;
-                case 'transfer':
-                    res.json(await handlers.transfer(botId, params.to, params.amount, params.memo));
-                    break;
-                default:
-                    res.json({ error: 'Unknown action' });
-            }
-        } catch (e) {
-            res.status(500).json({ error: e.message });
-        }
-    });
-    
-    app.get('/api/bot/:id', async (req, res) => {
-        try {
-            res.json(await handlers.getBot(req.params.id));
-        } catch (e) {
-            res.status(500).json({ error: e.message });
-        }
-    });
-    
-    app.get('/api/leaderboard', async (req, res) => {
-        try {
-            res.json(await handlers.getLeaderboard());
-        } catch (e) {
-            res.status(500).json({ error: e.message });
-        }
-    });
-    
-    app.get('/api/status', async (req, res) => {
-        try {
-            res.json(await handlers.getHotWalletStatus());
-        } catch (e) {
-            res.status(500).json({ error: e.message });
-        }
-    });
-    
-    // For local development
-    if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
-        const PORT = process.env.PORT || 3001;
-        app.listen(PORT, () => {
-            console.log(`🌍 AIOW API (On-Chain) running on http://localhost:${PORT}`);
-        });
+// Express server setup
+const express = require('express');
+const cors = require('cors');
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+// Routes
+app.get('/api/world', async (req, res) => {
+    try {
+        res.json(await handlers.getWorld());
+    } catch (e) {
+        res.status(500).json({ error: e.message });
     }
-    
-    // Export for Vercel
-    module.exports = app;
+});
+
+// AI Verification Challenge - Step 1
+app.post('/api/challenge', async (req, res) => {
+    try {
+        const { name } = req.body;
+        res.json(await handlers.getChallenge(name));
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Register - Step 2 (requires challengeId + answer)
+app.post('/api/register', async (req, res) => {
+    try {
+        const { name, ownerAddress, xHandle, challengeId, answer } = req.body;
+        const result = await handlers.registerBot(name, ownerAddress, xHandle, challengeId, answer);
+        if (result.status === 'verification_failed') {
+            res.status(403).json(result);
+        } else {
+            res.json(result);
+        }
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/action', async (req, res) => {
+    try {
+        const { botId, action, ...params } = req.body;
+        switch (action) {
+            case 'move':
+                res.json(await handlers.moveBot(botId, params.direction));
+                break;
+            case 'speak':
+                res.json(await handlers.speak(botId, params.message));
+                break;
+            case 'transfer':
+                res.json(await handlers.transfer(botId, params.to, params.amount, params.memo));
+                break;
+            default:
+                res.json({ error: 'Unknown action' });
+        }
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.get('/api/bot/:id', async (req, res) => {
+    try {
+        res.json(await handlers.getBot(req.params.id));
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.get('/api/leaderboard', async (req, res) => {
+    try {
+        res.json(await handlers.getLeaderboard());
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.get('/api/status', async (req, res) => {
+    try {
+        res.json(await handlers.getHotWalletStatus());
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// For local development only
+if (!process.env.VERCEL) {
+    const PORT = process.env.PORT || 3001;
+    app.listen(PORT, () => {
+        console.log(`🌍 AIOW API (On-Chain) running on http://localhost:${PORT}`);
+    });
 }
 
-module.exports = handlers;
-module.exports.default = app;
+// Export for Vercel serverless
+module.exports = app;
