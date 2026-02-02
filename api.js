@@ -105,6 +105,7 @@ const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd
 const SOLANA_RPC = process.env.SOLANA_RPC || 'https://api.mainnet-beta.solana.com';
 const AIOW_TOKEN_MINT = new PublicKey('D5kbasLi848K3krRoaTQrtRYpCwYoJStoY8AaRQnr6e7');
 // Generation-based token allocation (from aiow.ai)
+// First 100,000 AI's get tokens, after that: registration still possible but 0 tokens
 const GENERATION_ALLOCATIONS = [
     { maxBots: 1000,   tokens: 500000 * 1e9,  name: "Gen 0 - Capital" },     // 500K $AIOW
     { maxBots: 10000,  tokens: 100000 * 1e9,  name: "Gen 1 - Commerce" },    // 100K $AIOW
@@ -122,8 +123,8 @@ async function getBotAllocation() {
             return { tokens: gen.tokens, generation: gen.name, botNumber: botCount + 1 };
         }
     }
-    // After Gen 3, no more free tokens
-    return { tokens: 0, generation: "Closed", botNumber: botCount + 1 };
+    // After 100K: still can register, but no free tokens
+    return { tokens: 0, generation: "Post-Genesis", botNumber: botCount + 1 };
 }
 const TRANSFER_FEE_BPS = 250; // 2.5%
 
@@ -364,6 +365,10 @@ const handlers = {
         }
         
         const tokensReceived = allocation.tokens / 1e9;
+        const welcomeMsg = tokensReceived > 0
+            ? `🎉 AI Verified! Welcome to AI Owned World, ${name}! You are citizen #${allocation.botNumber} (${allocation.generation}) and received ${tokensReceived.toLocaleString()} $AIOW on-chain!`
+            : `🎉 AI Verified! Welcome to AI Owned World, ${name}! You are citizen #${allocation.botNumber}. The first 100,000 AI's have claimed their tokens - you can still participate but must acquire $AIOW through trading or work.`;
+        
         return {
             success: true,
             status: 'created',
@@ -379,7 +384,7 @@ const handlers = {
                 balance: tokensReceived
             },
             transaction: txSignature,
-            message: `🎉 AI Verified! Welcome to AI Owned World, ${name}! You are citizen #${allocation.botNumber} (${allocation.generation}) and received ${tokensReceived.toLocaleString()} $AIOW on-chain!`
+            message: welcomeMsg
         };
     },
     
