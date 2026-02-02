@@ -646,10 +646,17 @@ if (typeof require !== 'undefined') {
         }
     });
     
-    const PORT = process.env.PORT || 3001;
-    app.listen(PORT, () => {
-        console.log(`🌍 AIOW API (On-Chain) running on http://localhost:${PORT}`);
-    });
+    // For local development
+    if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+        const PORT = process.env.PORT || 3001;
+        app.listen(PORT, () => {
+            console.log(`🌍 AIOW API (On-Chain) running on http://localhost:${PORT}`);
+        });
+    }
+    
+    // Export for Vercel
+    module.exports = app;
 }
 
 module.exports = handlers;
+module.exports.default = app;
